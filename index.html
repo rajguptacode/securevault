@@ -488,15 +488,13 @@ async function save() {
   const encrypted = await encryptData({items, user: currentUser}, masterKey);
   try {
     if (!ghToken) { toast('No token - cannot save'); return; }
-    if (!ghSha) {
-      const body = { message: 'init vault', content: btoa(unescape(encodeURIComponent(encrypted))) };
-      const res = await ghApi('PUT', GH_FILE, body);
-      ghSha = res.content.sha;
-    } else {
-      const body = { message: 'vault update', content: btoa(unescape(encodeURIComponent(encrypted))), sha: ghSha };
-      const res = await ghApi('PUT', GH_FILE, body);
-      ghSha = res.content.sha;
-    }
+    try {
+      const fresh = await ghApi('GET', GH_FILE);
+      if (fresh) ghSha = fresh.content.sha;
+    } catch(e) {}
+    const body = { message: 'vault update', content: btoa(unescape(encodeURIComponent(encrypted))), ...(ghSha ? {sha: ghSha} : {}) };
+    const res = await ghApi('PUT', GH_FILE, body);
+    ghSha = res.content.sha;
     toast('Synced to cloud');
   } catch(e) {
     localStorage.setItem(K_DATA, encrypted);
