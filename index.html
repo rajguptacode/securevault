@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SecureVault</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https://api.github.com; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://api.github.com; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta http-equiv="X-Frame-Options" content="DENY">
+<meta http-equiv="Referrer-Policy" content="no-referrer">
+<meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
+<meta name="robots" content="noindex, nofollow">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -642,7 +648,7 @@ function handleImport(e) {
 
 /* ==================== LOCK ==================== */
 function lockVault() {
-  masterKey=null; currentUser=null; items=[]; ghSha=null; ghToken=null;
+  secureClear();
   document.getElementById('app').classList.remove('show');
   document.getElementById('cloud-setup').classList.add('hidden');
   document.getElementById('lock').classList.remove('hidden');
@@ -665,6 +671,11 @@ async function handleUnlock(e) {
 
   if(!user||!pw)return;
 
+  if(isLockedOut()){
+    msg.className='lock-msg error'; msg.textContent='Too many attempts. Wait '+getLockTimeLeft()+'s';
+    return false;
+  }
+
   const combo=user+':'+pw;
 
   if(!hasToken()){
@@ -686,6 +697,7 @@ async function handleUnlock(e) {
       try{const res=await ghApi('PUT',GH_FILE,body);ghSha=res.content.sha;}catch{}
     }
     msg.className='lock-msg success'; msg.textContent='Welcome back, '+currentUser+'!';
+    recordSuccess();
     setTimeout(()=>{
       document.getElementById('lock').classList.add('hidden');
       document.getElementById('app').classList.add('show');
@@ -693,6 +705,7 @@ async function handleUnlock(e) {
     },500);
   } else {
     msg.className='lock-msg error'; msg.textContent='Invalid username or password';
+    recordFail();
     form.classList.add('shake');
     setTimeout(()=>{form.classList.remove('shake');msg.textContent='';},1500);
     document.getElementById('lock-pass').value='';
@@ -707,6 +720,10 @@ async function handleCloudSetup(e) {
   const msg=document.getElementById('cloud-msg');
   const form=document.getElementById('cloud-form');
   if(!token)return;
+  if(!validateToken(token)){
+    msg.className='lock-msg error'; msg.textContent='Invalid token format (must start with ghp_)';
+    return false;
+  }
 
   ghToken=token;
   try{
@@ -725,6 +742,7 @@ async function handleCloudSetup(e) {
     }
 
     msg.className='lock-msg success'; msg.textContent='Connected as '+user.login+'!';
+    recordSuccess();
     setTimeout(()=>{
       document.getElementById('cloud-setup').classList.add('hidden');
       document.getElementById('app').classList.add('show');
@@ -763,6 +781,193 @@ function initParticles(id){
     if(e.key==='Escape'&&document.getElementById('modal-overlay').classList.contains('open'))closeModal();
     if((e.ctrlKey||e.metaKey)&&e.key==='n'){e.preventDefault();openModal();}
   });
+})();
+
+/* ==================== SECURITY MODULE ==================== */
+
+/* --- 1. Brute Force Protection --- */
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS = 300000; // 5 min
+let failCount = parseInt(localStorage.getItem('sv_fails')||'0');
+let lockUntil = parseInt(localStorage.getItem('sv_lockout')||'0');
+
+function isLockedOut() {
+  if (Date.now() < lockUntil) return true;
+  if (Date.now() >= lockUntil && failCount >= MAX_ATTEMPTS) { failCount = 0; localStorage.setItem('sv_fails','0'); }
+  return false;
+}
+function recordFail() {
+  failCount++;
+  localStorage.setItem('sv_fails', failCount);
+  if (failCount >= MAX_ATTEMPTS) { lockUntil = Date.now() + LOCKOUT_MS; localStorage.setItem('sv_lockout', lockUntil); }
+}
+function recordSuccess() { failCount = 0; localStorage.setItem('sv_fails','0'); localStorage.setItem('sv_lockout','0'); }
+function getLockTimeLeft() { return Math.max(0, Math.ceil((lockUntil - Date.now()) / 1000)); }
+
+/* --- 2. Auto-Lock on Idle --- */
+const IDLE_MS = 300000; // 5 min
+let lastActivity = Date.now();
+let idleTimer = null;
+
+function resetIdle() { lastActivity = Date.now(); }
+function startIdleCheck() {
+  setInterval(() => {
+    if (masterKey && Date.now() - lastActivity > IDLE_MS) { lockVault(); toast('Auto-locked due to inactivity'); }
+  }, 10000);
+  ['mousemove','keydown','click','scroll','touchstart'].forEach(e => document.addEventListener(e, resetIdle, {passive:true}));
+}
+
+/* --- 3. Clipboard Auto-Clear --- */
+let clipTimer = null;
+function secureCopy(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(()=>{toast('Copied!');scheduleClipClear();}).catch(()=>fbSecureCopy(text));
+  } else fbSecureCopy(text);
+}
+function fbSecureCopy(t) {
+  const a=document.createElement('textarea'); a.value=t; a.style.cssText='position:fixed;left:-9999px';
+  document.body.appendChild(a); a.select();
+  try{document.execCommand('copy');toast('Copied!');scheduleClipClear();}catch{prompt('Copy:',t);}
+  document.body.removeChild(a);
+}
+function scheduleClipClear() {
+  clearTimeout(clipTimer);
+  clipTimer = setTimeout(() => {
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText('');
+    const a=document.createElement('textarea'); a.value=''; a.style.cssText='position:fixed;left:-9999px';
+    document.body.appendChild(a); a.select(); try{document.execCommand('copy');}catch{}; document.body.removeChild(a);
+  }, 30000);
+}
+
+/* --- 4. Input Sanitization --- */
+function sanitizeInput(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;').replace(/\//g,'&#x2F;');
+}
+function sanitizeHTML(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+function validateToken(t) { return /^ghp_[a-zA-Z0-9]{36,}$/.test(t); }
+
+/* --- 5. Anti-Tampering --- */
+const CODE_HASH_KEY = 'sv_hash';
+async function computeCodeHash() {
+  const scripts = document.querySelectorAll('script');
+  if (!scripts.length) return '';
+  const text = scripts[scripts.length-1].textContent;
+  const data = enc.encode(text);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function verifyIntegrity() {
+  const current = await computeCodeHash();
+  const stored = localStorage.getItem(CODE_HASH_KEY);
+  if (stored && stored !== current) {
+    document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#08080e;color:#ff5858;font-family:monospace;text-align:center;padding:20px"><div><h1 style="font-size:24px;margin-bottom:12px">SECURITY ALERT</h1><p>Code integrity check failed.<br>This app may have been tampered with.</p></div></div>';
+    throw new Error('Tamper detected');
+  }
+  localStorage.setItem(CODE_HASH_KEY, current);
+}
+
+/* --- 6. Memory Cleanup --- */
+function secureClear() {
+  masterKey = null; currentUser = null; items = []; ghSha = null; ghToken = null;
+  if (clipTimer) { clearTimeout(clipTimer); clipTimer = null; }
+  if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+}
+
+/* --- 7. Secure String Comparison (constant-time) --- */
+function secureCompare(a, b) {
+  if (a.length !== b.length) return false;
+  let r = 0;
+  for (let i = 0; i < a.length; i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return r === 0;
+}
+
+/* --- 8. DevTools Detection --- */
+(function(){
+  const el = new Image();
+  Object.defineProperty(el, 'id', { get: function() { detectDevTools(); }});
+  setInterval(() => { console.log('%c', el); console.clear(); }, 1000);
+  let devToolsOpen = false;
+  const threshold = 160;
+  function detectDevTools() {
+    if (devToolsOpen) return;
+    const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+    const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+    if (widthThreshold || heightThreshold) {
+      devToolsOpen = true;
+      if (masterKey) { lockVault(); toast('Security: Vault locked (DevTools detected)'); }
+    }
+  }
+  window.addEventListener('resize', detectDevTools);
+})();
+
+/* --- 9. Anti-Console-Log --- */
+(function(){
+  const _log = console.log;
+  const _warn = console.warn;
+  const _error = console.error;
+  const _info = console.info;
+  console.log = function(){};
+  console.warn = function(){};
+  console.error = function(){};
+  console.info = function(){};
+  setInterval(() => { console.clear(); }, 2000);
+})();
+
+/* --- 10. Keyboard Shortcut Protection --- */
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'F12') { e.preventDefault(); return false; }
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) { e.preventDefault(); return false; }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'u') { e.preventDefault(); return false; }
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); return false; }
+});
+
+/* --- 11. Right-Click Disable --- */
+document.addEventListener('contextmenu', function(e) { e.preventDefault(); return false; });
+
+/* --- 12. Text Selection Protection --- */
+document.addEventListener('selectstart', function(e) { if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') e.preventDefault(); });
+
+/* --- 13. Secure Event Delegation (XSS Prevention) --- */
+function safeSetHTML(el, html) {
+  el.innerHTML = '';
+  const tmp = document.createElement('div');
+  tmp.textContent = html;
+  el.appendChild(tmp);
+}
+
+/* --- Override copyVal for security --- */
+const origCopyVal = window.copyVal;
+window.copyVal = function(btn) { secureCopy(btn.dataset.val); };
+
+/* --- Override fbCopy for security --- */
+window.fbCopy = function(t) { secureCopy(t); };
+
+/* --- Initialize Security --- */
+(async function(){
+  try { await verifyIntegrity(); } catch(e) { return; }
+  startIdleCheck();
+  resetIdle();
+
+  if (isLockedOut()) {
+    const lockMsg = document.getElementById('lock-msg');
+    const submitBtn = document.getElementById('lock-submit-btn');
+    if (lockMsg && submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = '.5';
+      const tick = () => {
+        const left = getLockTimeLeft();
+        if (left <= 0) { submitBtn.disabled = false; submitBtn.style.opacity = '1'; lockMsg.textContent = ''; lockMsg.className = 'lock-msg'; return; }
+        lockMsg.className = 'lock-msg error';
+        lockMsg.textContent = 'Locked for ' + left + 's (too many attempts)';
+        requestAnimationFrame(tick);
+      };
+      tick();
+    }
+  }
 })();
 </script>
 </body>
