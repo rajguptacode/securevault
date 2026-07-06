@@ -858,7 +858,7 @@ function sanitizeHTML(str) {
   d.textContent = str;
   return d.innerHTML;
 }
-function validateToken(t) { return /^ghp_[a-zA-Z0-9]{36,}$/.test(t); }
+function validateToken(t) { return /^(ghp_[a-zA-Z0-9]{36,}|github_pat_[a-zA-Z0-9_]{50,})$/.test(t); }
 
 /* --- 6. Anti-Tampering --- */
 const CODE_HASH_KEY = 'sv_hash';
