@@ -487,9 +487,16 @@ async function loadTokenFromGist(pw) {
 async function save() {
   const encrypted = await encryptData({items, user: currentUser}, masterKey);
   try {
-    const body = { message: 'vault update', content: btoa(unescape(encodeURIComponent(encrypted))), ...(ghSha ? {sha: ghSha} : {}) };
-    const res = await ghApi('PUT', GH_FILE, body);
-    ghSha = res.content.sha;
+    if (!ghToken) { toast('No token - cannot save'); return; }
+    if (!ghSha) {
+      const body = { message: 'init vault', content: btoa(unescape(encodeURIComponent(encrypted))) };
+      const res = await ghApi('PUT', GH_FILE, body);
+      ghSha = res.content.sha;
+    } else {
+      const body = { message: 'vault update', content: btoa(unescape(encodeURIComponent(encrypted))), sha: ghSha };
+      const res = await ghApi('PUT', GH_FILE, body);
+      ghSha = res.content.sha;
+    }
     toast('Synced to cloud');
   } catch(e) {
     localStorage.setItem(K_DATA, encrypted);
@@ -640,10 +647,10 @@ function handleSubmit(e) {
   if(!title||!value)return;
   if(eid){const i=items.findIndex(x=>x.id===eid);if(i>=0)items[i]={...items[i],category:cat,title,username,value,tags,updatedAt:Date.now()};}
   else items.push({id:uid(),category,title,username,value,tags,createdAt:Date.now(),updatedAt:Date.now()});
-  save(); closeModal(); render();
+  closeModal(); render(); save();
 }
 function editItem(id){openModal(id);}
-function removeItem(id){if(!confirm('Delete this item?'))return;items=items.filter(i=>i.id!==id);save();render();}
+async function removeItem(id){if(!confirm('Delete this item?'))return;items=items.filter(i=>i.id!==id);render();await save();}
 function syncNow(){if(!ghToken)return;save();}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
 function updatePlaceholder(){
