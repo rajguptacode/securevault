@@ -874,8 +874,8 @@ async function verifyIntegrity() {
   const current = await computeCodeHash();
   const stored = localStorage.getItem(CODE_HASH_KEY);
   if (stored && stored !== current) {
-    document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#08080e;color:#ff5858;font-family:monospace;text-align:center;padding:20px"><div><h1 style="font-size:24px;margin-bottom:12px">SECURITY ALERT</h1><p>Code integrity check failed.<br>This app may have been tampered with.</p></div></div>';
-    throw new Error('Tamper detected');
+    toast('Warning: Code was updated. If you did not update, this may be a security risk.');
+    console.warn('[SECURITY] Code integrity mismatch - possible tampering or update');
   }
   localStorage.setItem(CODE_HASH_KEY, current);
 }
