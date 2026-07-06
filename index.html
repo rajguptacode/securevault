@@ -500,7 +500,7 @@ async function save() {
     toast('Synced to cloud');
   } catch(e) {
     localStorage.setItem(K_DATA, encrypted);
-    toast('Cloud sync failed, saved locally');
+    toast('Error: ' + (e.message || 'unknown'));
   }
 }
 
