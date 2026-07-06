@@ -8,14 +8,14 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
 --bg:#08080e;--bg2:#101018;--bg3:#181824;--bg4:#202030;--bg5:#282840;
---border:#252540;--border2:#303055;
---text:#e8e8f8;--text2:#9898b8;--text3:#585878;--text4:#404058;
---accent:#7c6cf0;--accent2:#a8a0ff;--accent3:#5a4cd0;
+--border:#2a2020;--border2:#3d2e1e;
+--text:#f0e8e0;--text2:#a89888;--text3:#685848;--text4:#483828;
+--accent:#e87820;--accent2:#ffaa40;--accent3:#c06010;
 --success:#00e0c8;--danger:#ff5858;--warn:#ffb830;
---glow:rgba(124,108,240,.12);--glow2:rgba(0,224,200,.08);
+--glow:rgba(232,120,32,.12);--glow2:rgba(255,170,64,.08);
 }
 html{font-size:14px}
-body{font-family:'Inter',-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body{font-family:'Inter',-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;background-image:radial-gradient(circle at 20% 80%,rgba(232,120,32,.02) 0%,transparent 50%),radial-gradient(circle at 80% 20%,rgba(255,170,64,.02) 0%,transparent 50%)}
 
 /* ===== LOCK SCREEN ===== */
 #lock{position:fixed;inset:0;z-index:9999;background:#04040a;display:flex;align-items:center;justify-content:center;overflow:hidden}
@@ -23,15 +23,15 @@ body{font-family:'Inter',-apple-system,"Segoe UI",Roboto,sans-serif;background:v
 
 /* Animated background */
 .lock-bg{position:absolute;inset:0}
-.lock-bg::before{content:'';position:absolute;inset:-50%;background:conic-gradient(from 0deg at 50% 50%,transparent 0deg,rgba(124,108,240,.03) 60deg,transparent 120deg,rgba(0,224,200,.02) 180deg,transparent 240deg,rgba(124,108,240,.03) 300deg,transparent 360deg);animation:lockRotate 30s linear infinite}
+.lock-bg::before{content:'';position:absolute;inset:-50%;background:conic-gradient(from 0deg at 50% 50%,transparent 0deg,rgba(232,120,32,.04) 60deg,transparent 120deg,rgba(255,170,64,.03) 180deg,transparent 240deg,rgba(232,120,32,.04) 300deg,transparent 360deg);animation:lockRotate 25s linear infinite}
 @keyframes lockRotate{to{transform:rotate(360deg)}}
-.lock-bg::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(124,108,240,.06) 0%,transparent 60%)}
+.lock-bg::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(232,120,32,.08) 0%,transparent 60%)}
 
 /* Grid overlay */
 .lock-grid{position:absolute;inset:0;background-image:
-  linear-gradient(rgba(124,108,240,.015) 1px,transparent 1px),
-  linear-gradient(90deg,rgba(124,108,240,.015) 1px,transparent 1px);
-  background-size:60px 60px;animation:gridShift 30s linear infinite;opacity:.6}
+  linear-gradient(rgba(232,120,32,.015) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(232,120,32,.015) 1px,transparent 1px);
+  background-size:60px 60px;animation:gridShift 25s linear infinite;opacity:.6}
 @keyframes gridShift{to{transform:translate(60px,60px)}}
 
 /* Particles */
@@ -48,10 +48,12 @@ body{font-family:'Inter',-apple-system,"Segoe UI",Roboto,sans-serif;background:v
 
 /* Lock icon */
 .lock-icon-wrap{width:80px;height:80px;margin:0 auto 32px;position:relative}
-.lock-icon-wrap::before{content:'';position:absolute;inset:-16px;border:1px solid rgba(124,108,240,.1);border-radius:50%;animation:iconRing 3s ease-in-out infinite}
-.lock-icon-wrap::after{content:'';position:absolute;inset:-8px;border:1px solid rgba(124,108,240,.06);border-radius:50%;animation:iconRing 3s ease-in-out infinite .5s}
-@keyframes iconRing{0%,100%{transform:scale(1);opacity:.3}50%{transform:scale(1.15);opacity:.6}}
-.lock-icon-wrap svg{width:100%;height:100%;filter:drop-shadow(0 0 20px rgba(124,108,240,.3))}
+.lock-icon-wrap::before{content:'';position:absolute;inset:-16px;border:1px solid rgba(232,120,32,.12);border-radius:50%;animation:iconRing 3s ease-in-out infinite}
+.lock-icon-wrap::after{content:'';position:absolute;inset:-8px;border:1px solid rgba(255,170,64,.08);border-radius:50%;animation:iconRing 3s ease-in-out infinite .5s}
+@keyframes iconRing{0%,100%{transform:scale(1);opacity:.3}50%{transform:scale(1.2);opacity:.7}}
+.lock-icon-wrap{animation:iconPulse 4s ease-in-out infinite}
+@keyframes iconPulse{0%,100%{filter:drop-shadow(0 0 15px rgba(232,120,32,.2))}50%{filter:drop-shadow(0 0 30px rgba(232,120,32,.5))}}
+.lock-icon-wrap svg{width:100%;height:100%;filter:drop-shadow(0 0 25px rgba(232,120,32,.4))}
 
 /* Title */
 .lock-title{font-size:11px;text-transform:uppercase;letter-spacing:6px;color:var(--text3);margin-bottom:8px;opacity:0;animation:lockFadeUp .6s ease .3s forwards}
@@ -64,7 +66,7 @@ body{font-family:'Inter',-apple-system,"Segoe UI",Roboto,sans-serif;background:v
 .lock-field:nth-child(2){animation-delay:.75s}
 .lock-field label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--text3);margin-bottom:6px;text-align:left}
 .lock-field input{width:100%;padding:14px 16px;font-size:15px;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.02);color:var(--text);outline:none;transition:all .3s;backdrop-filter:blur(20px)}
-.lock-field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,108,240,.1),0 0 30px rgba(124,108,240,.08)}
+.lock-field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(232,120,32,.12),0 0 30px rgba(232,120,32,.1)}
 .lock-field input::placeholder{color:var(--text4)}
 .lock-field .field-icon{position:absolute;right:14px;top:38px;color:var(--text4);pointer-events:none}
 
@@ -72,7 +74,7 @@ body{font-family:'Inter',-apple-system,"Segoe UI",Roboto,sans-serif;background:v
 .lock-submit{width:100%;padding:14px;font-size:14px;font-weight:600;letter-spacing:1px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--accent3),var(--accent));color:#fff;cursor:pointer;transition:all .3s;margin-top:8px;opacity:0;animation:lockFadeUp .5s ease .9s forwards;position:relative;overflow:hidden}
 .lock-submit::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.1),transparent);opacity:0;transition:opacity .3s}
 .lock-submit:hover::before{opacity:1}
-.lock-submit:hover{transform:translateY(-1px);box-shadow:0 8px 30px rgba(124,108,240,.3)}
+.lock-submit:hover{transform:translateY(-2px);box-shadow:0 8px 35px rgba(232,120,32,.4)}
 .lock-submit:active{transform:translateY(0)}
 
 /* Status messages */
@@ -88,11 +90,13 @@ body{font-family:'Inter',-apple-system,"Segoe UI",Roboto,sans-serif;background:v
 #app{display:none;min-height:100vh}
 #app.show{display:block;animation:appReveal .7s cubic-bezier(.4,0,.2,1)}
 @keyframes appReveal{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:scale(1)}}
+@keyframes fadeInDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
 
 .container{max-width:1200px;margin:0 auto;padding:20px}
 
 /* Header */
-.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:16px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:16px;padding-bottom:20px;border-bottom:1px solid var(--border);animation:fadeInDown .5s ease;position:relative}
+.header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.4}
 .header-left{display:flex;align-items:center;gap:14px}
 .header-left svg{width:28px;height:28px;color:var(--accent)}
 .header h1{font-size:22px;font-weight:700;letter-spacing:-.5px}
@@ -101,9 +105,10 @@ body{font-family:'Inter',-apple-system,"Segoe UI",Roboto,sans-serif;background:v
 .user-avatar{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--accent3),var(--accent));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
 
 /* Buttons */
-.btn{padding:9px 18px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn{padding:9px 18px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;transition:all .25s cubic-bezier(.4,0,.2,1);display:inline-flex;align-items:center;gap:6px}
+.btn:active{transform:scale(.96)}
 .btn-primary{background:var(--accent);color:#fff}
-.btn-primary:hover{background:var(--accent2);box-shadow:0 4px 20px rgba(124,108,240,.25)}
+.btn-primary:hover{background:var(--accent2);box-shadow:0 4px 25px rgba(232,120,32,.3)}
 .btn-secondary{background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
 .btn-secondary:hover{background:var(--bg4);border-color:var(--border2)}
 .btn-danger{background:rgba(255,88,88,.1);color:var(--danger);border:1px solid rgba(255,88,88,.2)}
@@ -117,23 +122,26 @@ body{font-family:'Inter',-apple-system,"Segoe UI",Roboto,sans-serif;background:v
 .search-wrap{flex:1;min-width:220px;position:relative}
 .search-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--text4)}
 .search-input{width:100%;padding:11px 14px 11px 38px;border:1px solid var(--border);border-radius:10px;background:var(--bg2);color:var(--text);font-size:14px;outline:none;transition:all .2s}
-.search-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,108,240,.08)}
-.filter-select{padding:11px 14px;border:1px solid var(--border);border-radius:10px;background:var(--bg2);color:var(--text);font-size:13px;outline:none;min-width:140px;cursor:pointer;transition:all .2s}
-.filter-select:focus{border-color:var(--accent)}
+.search-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(232,120,32,.1)}
+.filter-select{padding:11px 14px;border:1px solid var(--border);border-radius:10px;background:var(--bg2);color:var(--text);font-size:13px;outline:none;min-width:140px;cursor:pointer;transition:all .25s}
+.filter-select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(232,120,32,.08)}
 
 /* Stats */
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px}
-.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;transition:all .2s}
-.stat-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;transition:all .3s cubic-bezier(.4,0,.2,1);animation:cardIn .4s ease backwards}
+.stat-card:nth-child(1){animation-delay:.05s}.stat-card:nth-child(2){animation-delay:.1s}.stat-card:nth-child(3){animation-delay:.15s}.stat-card:nth-child(4){animation-delay:.2s}.stat-card:nth-child(5){animation-delay:.25s}.stat-card:nth-child(6){animation-delay:.3s}
+.stat-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 6px 25px rgba(232,120,32,.08)}
 .stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
 .stat-value{font-size:24px;font-weight:700;margin-top:6px}
 .stat-count{color:var(--accent2)}
 
 /* Cards Grid */
 .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;margin-bottom:24px}
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px;transition:all .25s;position:relative;overflow:hidden}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px;transition:all .3s cubic-bezier(.4,0,.2,1);position:relative;overflow:hidden;animation:cardIn .5s ease backwards}
+.card:nth-child(1){animation-delay:.05s}.card:nth-child(2){animation-delay:.1s}.card:nth-child(3){animation-delay:.15s}.card:nth-child(4){animation-delay:.2s}.card:nth-child(5){animation-delay:.25s}.card:nth-child(6){animation-delay:.3s}
+@keyframes cardIn{from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0;transition:opacity .3s}
-.card:hover{border-color:var(--border2);box-shadow:0 8px 40px rgba(0,0,0,.3)}
+.card:hover{border-color:var(--accent);box-shadow:0 8px 40px rgba(232,120,32,.12),0 0 0 1px rgba(232,120,32,.06);transform:translateY(-3px)}
 .card:hover::before{opacity:1}
 .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .card-cat{font-size:10px;text-transform:uppercase;letter-spacing:1px;padding:4px 10px;border-radius:6px;font-weight:600}
@@ -147,7 +155,7 @@ body{font-family:'Inter',-apple-system,"Segoe UI",Roboto,sans-serif;background:v
 .card-username-label{color:var(--text3);font-weight:500}
 .card-username-val{color:var(--accent2);font-weight:500}
 .card-username button{background:none;border:1px solid var(--border);border-radius:6px;padding:2px 8px;font-size:11px;color:var(--text2);cursor:pointer;transition:all .2s}
-.card-username button:hover{border-color:var(--accent);color:var(--accent)}
+.card-username button:hover{border-color:var(--accent);color:var(--accent2)}
 .card-value{font-size:13px;color:var(--text2);word-break:break-all;font-family:'SF Mono',Monaco,Consolas,monospace;background:var(--bg);padding:10px 12px;border-radius:8px;max-height:90px;overflow-y:auto;white-space:pre-wrap;line-height:1.5;border:1px solid var(--border)}
 .card-meta{font-size:11px;color:var(--text3);margin-top:10px;display:flex;justify-content:space-between;align-items:center}
 .card-tags{display:flex;gap:4px;flex-wrap:wrap}
@@ -160,26 +168,27 @@ body{font-family:'Inter',-apple-system,"Segoe UI",Roboto,sans-serif;background:v
 /* Modal */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:100;align-items:center;justify-content:center}
 .modal-overlay.open{display:flex}
-.modal{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:32px;width:92%;max-width:460px;max-height:90vh;overflow-y:auto;animation:modalIn .3s ease}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:32px;width:92%;max-width:460px;max-height:90vh;overflow-y:auto;animation:modalIn .4s cubic-bezier(.4,0,.2,1);box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 40px rgba(232,120,32,.05)}
 @keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .modal h2{font-size:18px;font-weight:700;margin-bottom:24px}
 .form-group{margin-bottom:16px}
 .form-group label{display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
 .form-group input,.form-group select,.form-group textarea{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--bg3);color:var(--text);font-size:14px;outline:none;font-family:inherit;transition:all .2s}
 .form-group textarea{min-height:110px;resize:vertical;font-family:'SF Mono',Monaco,Consolas,monospace;font-size:13px;line-height:1.5}
-.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,108,240,.08)}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(232,120,32,.1)}
 .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;padding-top:16px;border-top:1px solid var(--border)}
 
 /* Empty state */
-.empty{text-align:center;padding:80px 20px;color:var(--text3)}
-.empty-icon{width:64px;height:64px;margin:0 auto 20px;border-radius:16px;background:var(--bg3);display:flex;align-items:center;justify-content:center}
+.empty{text-align:center;padding:80px 20px;color:var(--text3);animation:fadeInDown .5s ease}
+.empty-icon{width:64px;height:64px;margin:0 auto 20px;border-radius:16px;background:var(--bg3);display:flex;align-items:center;justify-content:center;border:1px solid var(--border);transition:all .3s}
+.empty-icon:hover{border-color:var(--accent);box-shadow:0 0 20px rgba(232,120,32,.1)}
 .empty-icon svg{width:28px;height:28px;color:var(--text4)}
 .empty p{font-size:14px;margin-bottom:16px}
 .empty .btn{margin-top:8px}
 
 /* Toast */
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg4);color:var(--text);padding:12px 24px;border-radius:10px;font-size:13px;z-index:999;animation:toastIn .3s ease;border:1px solid var(--border);box-shadow:0 8px 30px rgba(0,0,0,.4)}
-@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--bg4),var(--bg3));color:var(--accent2);padding:12px 28px;border-radius:12px;font-size:13px;font-weight:500;z-index:999;animation:toastIn .4s cubic-bezier(.4,0,.2,1);border:1px solid var(--border2);box-shadow:0 8px 35px rgba(0,0,0,.5),0 0 20px rgba(232,120,32,.1)}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(20px) scale(.95)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
 
 /* Print */
 @media print{body{background:#fff;color:#000}.no-print{display:none!important}.card{border:1px solid #ddd;background:#fff}}
@@ -193,8 +202,8 @@ body{font-family:'Inter',-apple-system,"Segoe UI",Roboto,sans-serif;background:v
   <div class="lock-bg"></div>
   <div class="lock-grid"></div>
   <div class="lock-particles" id="lock-particles"></div>
-  <div class="lock-orb" style="width:200px;height:200px;background:rgba(124,108,240,.04);top:20%;left:15%"></div>
-  <div class="lock-orb" style="width:150px;height:150px;background:rgba(0,224,200,.03);bottom:25%;right:20%;animation-delay:-4s"></div>
+  <div class="lock-orb" style="width:200px;height:200px;background:rgba(232,120,32,.05);top:20%;left:15%"></div>
+  <div class="lock-orb" style="width:150px;height:150px;background:rgba(255,170,40,.04);bottom:25%;right:20%;animation-delay:-4s"></div>
 
   <div class="lock-content">
     <div class="lock-icon-wrap">
@@ -215,8 +224,8 @@ body{font-family:'Inter',-apple-system,"Segoe UI",Roboto,sans-serif;background:v
         </line>
         <defs>
           <linearGradient id="lockGrad" x1="18" y1="12" x2="62" y2="70">
-            <stop offset="0%" stop-color="#7c6cf0"/>
-            <stop offset="100%" stop-color="#00e0c8"/>
+            <stop offset="0%" stop-color="#e87820"/>
+            <stop offset="100%" stop-color="#ffaa40"/>
           </linearGradient>
         </defs>
       </svg>
@@ -608,7 +617,7 @@ async function handleUnlock(e) {
     p.style.animationDelay=Math.random()*6+'s';
     const s=1+Math.random()*3;
     p.style.width=p.style.height=s+'px';
-    p.style.background=['rgba(124,108,240,.4)','rgba(0,224,200,.3)','rgba(168,160,255,.3)'][Math.floor(Math.random()*3)];
+    p.style.background=['rgba(232,120,32,.5)','rgba(255,170,64,.4)','rgba(192,96,16,.3)'][Math.floor(Math.random()*3)];
     pc.appendChild(p);
   }
   document.getElementById('lock-user').focus();
