@@ -458,7 +458,7 @@ async function ghApi(method, path, body) {
 }
 
 async function gistApi(method, body) {
-  const opts = { method, headers: { 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' } };
+  const opts = { method, headers: { 'Authorization': 'Bearer ' + ghToken, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' } };
   if (body) opts.body = JSON.stringify(body);
   const r = await fetch('https://api.github.com/gists/' + GIST_ID, opts);
   if (!r.ok) throw new Error('Gist API error');
@@ -484,20 +484,29 @@ async function loadTokenFromGist(pw) {
   } catch(e) { return null; }
 }
 
+function toBase64(bytes) {
+  let binary = '';
+  const chunk = 8192;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
 async function save() {
+  if (!masterKey || !ghToken) return;
   const encrypted = await encryptData({items, user: currentUser}, masterKey);
   try {
-    if (!ghToken) { toast('No token - cannot save'); return; }
-    try {
-      const fresh = await ghApi('GET', GH_FILE);
-      if (fresh) ghSha = fresh.content.sha;
-    } catch(e) {}
-    const body = { message: 'vault update', content: btoa(unescape(encodeURIComponent(encrypted))), ...(ghSha ? {sha: ghSha} : {}) };
+    const fresh = await ghApi('GET', GH_FILE);
+    if (fresh) ghSha = fresh.content.sha;
+  } catch(e) {}
+  const content = toBase64(enc.encode(encrypted));
+  try {
+    const body = { message: 'vault update', content, ...(ghSha ? {sha: ghSha} : {}) };
     const res = await ghApi('PUT', GH_FILE, body);
     ghSha = res.content.sha;
     toast('Synced to cloud');
   } catch(e) {
-    localStorage.setItem(K_DATA, encrypted);
     toast('Error: ' + (e.message || 'unknown'));
   }
 }
@@ -507,12 +516,12 @@ async function load(pw) {
     const res = await ghApi('GET', GH_FILE);
     if (!res) { items = []; return {ok:true, fresh:true}; }
     ghSha = res.content.sha;
-    const encrypted = decodeURIComponent(escape(atob(res.content)));
+    const encrypted = dec.decode(Uint8Array.from(atob(res.content), c => c.charCodeAt(0)));
     const d = await decryptData(encrypted, pw);
     if (!d) return {ok:false};
     items = d.items || [];
     currentUser = d.user || 'User';
-    return {ok:true};
+    return {ok:true, user:currentUser};
   } catch(e) {
     const local = localStorage.getItem(K_DATA);
     if (!local) { items = []; return {ok:true, fresh:true}; }
@@ -520,7 +529,7 @@ async function load(pw) {
     if (!d) return {ok:false};
     items = d.items || [];
     currentUser = d.user || 'User';
-    return {ok:true};
+    return {ok:true, user:currentUser};
   }
 }
 
@@ -634,7 +643,7 @@ function openModal(editId) {
 }
 function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); document.getElementById('f-edit-id').value=''; }
 
-function handleSubmit(e) {
+async function handleSubmit(e) {
   e.preventDefault();
   const eid=document.getElementById('f-edit-id').value;
   const cat=document.getElementById('f-category').value;
@@ -645,7 +654,7 @@ function handleSubmit(e) {
   if(!title||!value)return;
   if(eid){const i=items.findIndex(x=>x.id===eid);if(i>=0)items[i]={...items[i],category:cat,title,username,value,tags,updatedAt:Date.now()};}
   else items.push({id:uid(),category,title,username,value,tags,createdAt:Date.now(),updatedAt:Date.now()});
-  closeModal(); render(); save();
+  closeModal(); render(); await save();
 }
 function editItem(id){openModal(id);}
 async function removeItem(id){if(!confirm('Delete this item?'))return;items=items.filter(i=>i.id!==id);render();await save();}
@@ -735,7 +744,8 @@ async function handleUnlock(e) {
   if(r.ok){
     masterKey=combo;
     if(r.fresh){
-      const body={message:'init vault',content:btoa(unescape(encodeURIComponent(await encryptData({items:[],user},combo))))};
+      const enc2 = await encryptData({items:[],user},combo);
+      const body={message:'init vault',content:toBase64(enc.encode(enc2))};
       try{const res=await ghApi('PUT',GH_FILE,body);ghSha=res.content.sha;}catch{}
     }
     msg.className='lock-msg success'; msg.textContent='Welcome back, '+currentUser+'!';
@@ -779,7 +789,7 @@ async function handleCloudSetup(e) {
     if(loadResult.ok && !loadResult.fresh){
       currentUser=loadResult.user||currentUser;
     } else if(loadResult.ok && loadResult.fresh){
-      currentUser=user;
+      currentUser=user.login;
       items=[];
       await save();
     } else {
@@ -1095,15 +1105,9 @@ async function requirePassword(action) {
 window.copyVal = function(btn) { secureCopy(btn.dataset.val); };
 window.fbCopy = function(t) { secureCopy(t); };
 
-/* --- 20. Anti-Replay: Timestamp Validation --- */
-let lastSaveTime = 0;
-const SAVE_COOLDOWN = 1000;
-function canSave() {
-  const now = Date.now();
-  if (now - lastSaveTime < SAVE_COOLDOWN) return false;
-  lastSaveTime = now;
-  return true;
-}
+/* --- 20. Anti-Replay: Save Lock --- */
+let saving = false;
+let saveQueue = null;
 
 /* --- Initialize Security --- */
 (async function(){
