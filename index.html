@@ -445,6 +445,8 @@ const K_DATA = 'sv_data';
 const K_TOKEN = 'sv_token';
 const GH_REPO = 'rajguptacode/securevault-data';
 const GH_FILE = 'vault.enc';
+const GIST_ID = 'be4b7fe6b481edf6c91349480b9feb5c';
+const GIST_FILE = 'token.enc';
 
 async function ghApi(method, path, body) {
   const opts = { method, headers: { 'Authorization': 'Bearer ' + ghToken, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' } };
@@ -453,6 +455,33 @@ async function ghApi(method, path, body) {
   if (method === 'GET' && r.status === 404) return null;
   if (!r.ok) throw new Error('GitHub API error: ' + r.status);
   return r.json();
+}
+
+async function gistApi(method, body) {
+  const opts = { method, headers: { 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch('https://api.github.com/gists/' + GIST_ID, opts);
+  if (!r.ok) throw new Error('Gist API error');
+  return r.json();
+}
+
+async function saveTokenToGist(token, pw) {
+  try {
+    const enc2 = await encryptData(token, pw);
+    const files = {};
+    files[GIST_FILE] = { content: enc2 };
+    await gistApi('PATCH', { files });
+  } catch(e) {}
+}
+
+async function loadTokenFromGist(pw) {
+  try {
+    const gist = await gistApi('GET');
+    if (!gist.files || !gist.files[GIST_FILE]) return null;
+    const content = gist.files[GIST_FILE].content;
+    const dec2 = await decryptData(content, pw);
+    return dec2;
+  } catch(e) { return null; }
 }
 
 async function save() {
@@ -678,17 +707,25 @@ async function handleUnlock(e) {
 
   const combo=user+':'+pw;
 
-  if(!hasToken()){
-    masterKey=combo;
-    currentUser=user;
-    document.getElementById('lock').classList.add('hidden');
-    document.getElementById('cloud-setup').classList.remove('hidden');
-    initParticles('cloud-particles');
-    document.getElementById('cloud-token').focus();
-    return false;
-  }
+  msg.className='lock-msg'; msg.textContent='Checking cloud...';
 
-  ghToken=getToken();
+  if(!hasToken()){
+    const gistToken = await loadTokenFromGist(combo);
+    if(gistToken && validateToken(gistToken)){
+      ghToken = gistToken;
+      saveToken(gistToken);
+    } else {
+      masterKey=combo;
+      currentUser=user;
+      document.getElementById('lock').classList.add('hidden');
+      document.getElementById('cloud-setup').classList.remove('hidden');
+      initParticles('cloud-particles');
+      document.getElementById('cloud-token').focus();
+      return false;
+    }
+  } else {
+    ghToken=getToken();
+  }
   const r=await load(combo);
   if(r.ok){
     masterKey=combo;
@@ -731,6 +768,7 @@ async function handleCloudSetup(e) {
     if(!r.ok) throw new Error();
     const user=await r.json();
     saveToken(token);
+    await saveTokenToGist(token, masterKey);
 
     const loadResult=await load(masterKey);
     if(loadResult.ok && !loadResult.fresh){
