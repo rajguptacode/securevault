@@ -718,6 +718,10 @@ async function handleCloudSetup(e) {
     const loadResult=await load(masterKey);
     if(loadResult.ok && !loadResult.fresh){
       currentUser=loadResult.user||currentUser;
+    } else {
+      currentUser=user;
+      items=[];
+      await save();
     }
 
     msg.className='lock-msg success'; msg.textContent='Connected as '+user.login+'!';
