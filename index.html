@@ -735,10 +735,14 @@ async function handleCloudSetup(e) {
     const loadResult=await load(masterKey);
     if(loadResult.ok && !loadResult.fresh){
       currentUser=loadResult.user||currentUser;
-    } else {
+    } else if(loadResult.ok && loadResult.fresh){
       currentUser=user;
       items=[];
       await save();
+    } else {
+      ghToken=null;
+      msg.className='lock-msg error'; msg.textContent='Wrong username or password for this vault';
+      return false;
     }
 
     msg.className='lock-msg success'; msg.textContent='Connected as '+user.login+'!';
